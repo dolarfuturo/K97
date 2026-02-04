@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>K97 Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-mono">
+
+    <div class="bg-black p-2 text-[10px] flex justify-between border-b border-emerald-900/50">
+        <span>K97_SYSTEM_v1.0.4_LIVE</span>
+        <span id="clock">00:00:00 UTC</span>
+    </div>
+
+    <div class="p-4 max-w-2xl mx-auto">
+        
+        <section class="mb-6">
+            <h2 class="text-emerald-500 text-xs mb-2">// MONITOR_DE_VENDAS</h2>
+            <div class="bg-slate-900 border border-emerald-900/30 p-4 rounded-lg shadow-2xl">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <p class="text-[10px] text-slate-500">ACUMULADO_DIA</p>
+                        <p class="text-3xl font-bold text-white">R$ 12.450,00</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] text-emerald-400">VWAP_RESET: 00:00 UTC</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-6">
+            <h2 class="text-blue-500 text-xs mb-2">// LOG_DE_CADEIRAS</h2>
+            <div class="space-y-2">
+                <div class="bg-slate-900/50 p-3 rounded border border-slate-800 flex justify-between">
+                    <span class="text-sm">Cadeira 01: Procedimento Ativo</span>
+                    <span class="text-blue-400 text-sm">22 min</span>
+                </div>
+                <div class="bg-slate-900/50 p-3 rounded border border-slate-800 flex justify-between">
+                    <span class="text-sm">Cadeira 02: Higienização</span>
+                    <span class="text-slate-500 text-sm">LIMPO</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-2 gap-4">
+            <button class="bg-emerald-900/20 border border-emerald-700 text-emerald-400 p-4 rounded-lg text-sm font-bold active:scale-95 transition-all">
+                GERAR_PIX
+            </button>
+            <button class="bg-blue-900/20 border border-blue-700 text-blue-400 p-4 rounded-lg text-sm font-bold active:scale-95 transition-all">
+                IMPRIMIR_BOLETO
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toISOString().split('T')[1].split('.')[0] + " UTC";
+        }
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
