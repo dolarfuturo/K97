@@ -1,73 +1,79 @@
-import streamlit as st
-import pandas as pd
-from datetime import datetime, timezone
-import time
+import datetime
+import hashlib
 
-# --- CONFIGURAÇÃO INTERFACE K97 ---
-st.set_page_config(page_title="K97 TERMINAL", layout="wide", initial_sidebar_state="collapsed")
+class K97Terminal:
+    def __init__(self):
+        self.user_level = 0  # 0: Operacional, 99: Gerente
+        self.logs = []
+        self.chat_history = []
+        self.financeiro = {"vendas_dia": 0.0, "cobranças_pendentes": []}
+        self.pacientes_ativos = {}
+        
+    def reset_vwap_time(self):
+        """Reset automático baseado no horário de abertura Binance (00:00 UTC)"""
+        now = datetime.datetime.utcnow()
+        return now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-# Estilo CSS para visual "Dark Terminal"
-st.markdown("""
-    <style>
-    .main { background-color: #020617; color: #f8fafc; }
-    .stMetric { background-color: #0f172a; border: 1px solid #1e293b; padding: 15px; border_radius: 10px; }
-    </style>
-    """, unsafe_allow_html=True)
+    def autenticar(self, senha):
+        # Hash simples para exemplo técnico
+        if hashlib.sha256(senha.encode()).hexdigest() == hashlib.sha256(b"admin99").hexdigest():
+            self.user_level = 99
+            print("[K97] ACESSO GERENCIAL LIBERADO. ABAS RESTRITAS ATIVAS.")
+        else:
+            self.user_level = 0
+            print("[K97] ACESSO OPERACIONAL PADRÃO.")
 
-# --- LÓGICA DE TEMPO (REGRAS DO USUÁRIO) ---
-# Reset VWAP configurado para 00:00 UTC (Abertura Binance)
-now_utc = datetime.now(timezone.utc)
-st.sidebar.subheader("📡 STATUS DO SISTEMA")
-st.sidebar.write(f"Relógio UTC: {now_utc.strftime('%H:%M:%S')}")
-st.sidebar.write(f"Reset em: 00:00:00 UTC")
+    def gerar_cobranca(self, paciente, valor, tipo="PIX"):
+        """Gera link de cobrança e QR Code fictício"""
+        status = "PENDENTE"
+        cobranca_id = hashlib.md5(f"{paciente}{valor}".encode()).hexdigest()[:8]
+        payload = {"id": cobranca_id, "paciente": paciente, "valor": valor, "tipo": tipo, "status": status}
+        self.financeiro["cobranças_pendentes"].append(payload)
+        
+        print(f"\n[K97-PAY] COBRANÇA GERADA - ID: {cobranca_id}")
+        print(f"Link: https://k97.pay/checkout/{cobranca_id}")
+        print(f"QRCODE {tipo}: [IMAGE_DATA_SIMULATED]")
+        return cobranca_id
 
-# --- INTERFACE DO TERMINAL ---
-st.markdown("<h1 style='color: #10b981; font-family: monospace;'>📟 K97_CORE_v1.0</h1>", unsafe_allow_html=True)
+    def aba_gerente(self):
+        """Aba restrita com histórico e monitoramento real-time"""
+        if self.user_level < 99:
+            print("[ERRO] ACESSO NEGADO. PRIVILÉGIOS INSUFICIENTES.")
+            return
 
-# Simulador de Dados (Substituiremos por Banco de Dados no próximo passo)
-# Aqui é onde o faturamento "ganha vida"
-faturamento_simulado = 12450.75 
+        print("\n" + "="*50)
+        print(f"K97 - DASHBOARD GERENCIAL | {datetime.datetime.now()}")
+        print("="*50)
+        print(f"FATURAMENTO REAL-TIME: R$ {self.financeiro['vendas_dia']:.2f}")
+        print(f"COBRANÇAS ATIVAS: {len(self.financeiro['cobranças_pendentes'])}")
+        print("\n--- ÚLTIMAS MENSAGENS DO CHAT ---")
+        for msg in self.chat_history[-5:]:
+            print(msg)
+        print("="*50)
 
-col1, col2, col3 = st.columns(3)
+    def enviar_mensagem(self, destinatario, texto):
+        remetente = "GERENTE" if self.user_level == 99 else "FUNCIONÁRIO"
+        timestamp = datetime.datetime.now().strftime("%H:%M")
+        entry = f"[{timestamp}] {remetente} -> {destinatario}: {texto}"
+        self.chat_history.append(entry)
+        print("[K97-CHAT] Mensagem enviada e logada.")
 
-with col1:
-    st.metric("FATURAMENTO (VWAP)", f"R$ {faturamento_simulado:,.2f}", delta="LIVE")
+    def imprimir_documento(self, doc_id):
+        print(f"\n[K97-PRINT] ENVIANDO PARA IMPRESSORA TÉRMICA...")
+        print(f"Documento ID: {doc_id} | Status: OK")
 
-with col2:
-    st.metric("CADEIRAS ATIVAS", "4 / 5", delta="-1")
+# --- EXECUÇÃO DO SISTEMA K97 ---
 
-with col3:
-    st.metric("TICKET MÉDIO", "R$ 840,00")
+terminal = K97Terminal()
 
-st.markdown("---")
+# 1. Fluxo Operacional (Funcionário)
+terminal.enviar_mensagem("GERENTE", "Paciente João Silva chegou para implante.")
+terminal.gerar_cobranca("João Silva", 1500.00, "PIX")
 
-# --- ÁREA DE COMANDOS DO GERENTE ---
-st.subheader("🛠️ COMANDOS DE OPERAÇÃO")
+# 2. Fluxo Gerencial (Acesso Restrito)
+terminal.autenticar("admin99") # Simulação de login
+terminal.financeiro["vendas_dia"] = 1500.00 # Atualização Real-time
+terminal.aba_gerente()
 
-c1, c2, c3 = st.columns(3)
-
-if c1.button("⚡ GERAR PIX DINÂMICO"):
-    st.warning("Gerando Payload BRCode...")
-    # Lógica de cripto/pix futura entra aqui
-    st.code("00020126330014BR.GOV.BCB.PIX0111CLINICAK97...6304", language="text")
-
-if c2.button("📑 AUDITORIA DO DIA"):
-    st.info("Compilando logs de transação da recepção...")
-
-if c3.button("🔄 FORCE RESET VWAP"):
-    st.error("Resetando métricas para 0.00 (Manual)")
-
-# --- TABELA DE FLUXO DE CAIXA ---
-st.markdown("### 📊 ÚLTIMAS ENTRADAS")
-# Simulação de dados para visualização no tablet
-df_vendas = pd.DataFrame({
-    "HORA (UTC)": ["23:45", "23:10", "22:50", "22:15"],
-    "PROCEDIMENTO": ["Implante", "Limpeza", "Avaliação", "Prótese"],
-    "VALOR": [4500.00, 250.00, 0.00, 1800.00],
-    "STATUS": ["PAGO", "PAGO", "PENDENTE", "PAGO"]
-})
-st.table(df_vendas)
-
-# Rodapé Técnico
-st.markdown("---")
-st.caption("K97 Terminal - Conexão Criptografada via Streamlit Cloud")
+# 3. Comando de Impressão
+terminal.imprimir_documento("TX-9982")
